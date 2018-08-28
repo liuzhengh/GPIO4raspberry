@@ -1,0 +1,184 @@
+http://wiringpi.com/reference/setup/
+
+程序运行前应先运行setup函数初始化wiringPi
+
+int wiringPiSetup (void) ;
+该函数将引脚设置为wiringpi编号方式，
+
+
+int wiringPiSetupGpio (void) ;
+该函数将引脚设置为博通编号方式，
+
+
+int wiringPiSetupPhys (void) ;
+该函数将引脚设置为物理编号方式，
+
+
+int wiringPiSetupSys (void) ;
+该函数将引脚设置为底层接口编号方式，
+
+
+
+
+http://wiringpi.com/reference/core-functions/
+
+void pinMode (int pin, int mode) ;
+
+设置GPIO口为输入或输出模式，可选以下模式（INPUT, OUTPUT, PWM_OUTPUT or GPIO_CLOCK）
+只有wiringPi pin1(BCM_GPIO 18)可以设置PWM_OUTPUT，wiringPi pin7(BCM_GPIO 4)可以设置GPIO_CLOCK；
+
+GPIO设置为Sys mode时该函数不可用。应在运行程序前运行脚本以初始化。
+
+void pullUpDnControl (int pin, int pud) ;
+设置上下拉输入（PUD_OFF, (浮空), PUD_DOWN (下拉) or PUD_UP (上拉至3.3v) ）
+上下拉电阻大约有50K欧；
+
+GPIO设置为Sys mode时该函数不可用。应在运行程序前运行脚本以初始化。
+
+void digitalWrite (int pin, int value) ;
+写GPIO口，非0表示高电平，0表示低电平；
+
+void pwmWrite (int pin, int value) ;
+写PWM寄存器，树莓派有一个PWM输出引脚（pin1）(BMC_GPIO 18, 物理引脚 12) ，值可写为0-1024；
+
+int digitalRead (int pin) ;
+读输入引脚；
+
+analogRead (int pin) ;
+读模拟输入，需要扩展版支持；
+
+analogWrite (int pin, int value) ;
+模拟量输出，需要扩展版支持；
+
+
+
+
+
+http://wiringpi.com/reference/raspberry-pi-specifics/
+
+void digitalWriteByte (int value) ;
+给pin1-8一次写一个字节，加快执行速度，但该函数还是需要操作两次硬件；
+
+pwmSetMode (int mode) ;
+PWM发生器有两个工作模式，通过该函数可设置为balanced（PWM_MODE_BAL）（均衡）或者mark:space（？）（PWM_MODE_MS）；
+mark:space为传统模式，但默认为balanced模式；
+
+pwmSetRange (unsigned int range) ;
+设置PWM范围寄存器，默认为1024；
+
+pwmSetClock (int divisor) ;
+设置PWM发生器时钟分频因数；
+
+piBoardRev (void) ;
+返回树莓派板的型号：1或2；
+因为博通编号方式树莓派1代与树莓派2代有区别，所以如果使用博通编号方式你需要知道它们的不同；
+
+wpiPinToGpio (int wPiPin) ;
+返回wiringpi编码引脚对应的博通编码引脚；
+
+physPinToGpio (int physPin) ;
+返回物理编码引脚对应的博通编码引脚；
+
+setPadDrive (int group, int value) ;
+设置特定组GPIO口的驱动强度0-7；不建议使用；
+
+
+http://wiringpi.com/reference/priority-interrupts-and-threads/
+
+
+优先级：
+int piHiPri (int priority) ;
+以高进程或线程的优先级；接受参数为0-99；
+必须以root身份运行程序否则该函数无效；
+
+中断：
+int waitForInterrupt (int pin, int timeOut) ;
+调用该函数使程序进入休眠以等待外部中断，timeOut参数可以设置超时毫秒数，可以设置-1来让进程永久等待外部中断；
+返回-1则程序发生错误，返回0则超时，返回1则发生中断；
+使用前应设置GPIO口的触发方式，目前只能通过gpio命令，脚本或着system（）调用来初始化；
+例如：gpio edge 0 falling (在运行程序前）
+
+
+int wiringPiISR (int pin, int edgeType,  void (*function)(void)) ;
+该函数将创建一个新的线程，当中断发生时则调用函数指针指向的函数；
+参数pin自动选择当前选择的pin口编号模式；参数edgeType（触发方式）可以设置为：
+NT_EDGE_FALLING, INT_EDGE_RISING, INT_EDGE_BOTH 或 INT_EDGE_SETUP
+当设置为INT_EDGE_SETUP时，程序假定在其他地方设置过触发方式例如使用gpio命令，但是如果你指定了其他
+触发方式，则程序会导出该IO口并初始化。这是通过调用gpio命令来实现的所以需要该命令可用；
+该函数可以在任意模式下工作，也不需要root权限；
+
+当在执行该中断时又来了一个中断，那么这个中断将被追踪，多于的将被忽略。？
+
+当以root权限运行时，该线程将运行在高优先级上；
+
+多线程：
+int piThreadCreate (name) ;
+
+通过PI_THREAD来声明线程函数：
+PI_THREAD (myThread)
+{
+  .. code here to run concurrently with
+        the main program, probably in an
+        infinite loop
+}
+通过piThreadCreate函数来开启线程运行：
+x = piThreadCreate (myThread) ;
+if (x != 0)
+  printf ("it didn't startn")
+
+piLock (int keyNum) ;
+piUnlock (int keyNum) ;
+进程锁之类的？
+keyNum=0-3；
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
